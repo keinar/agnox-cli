@@ -1,0 +1,49 @@
+version: 2
+
+project_name: aac
+
+before:
+  hooks:
+    - go mod tidy
+
+builds:
+  - id: aac
+    main: .
+    binary: aac
+    env:
+      - CGO_ENABLED=0
+    ldflags:
+      - -s -w -X github.com/keinar/aac-cli/cmd.Version={{.Version}}
+    goos:
+      - linux
+      - darwin
+      - windows
+    goarch:
+      - amd64
+      - arm64
+
+archives:
+  - id: aac
+    format: tar.gz
+    name_template: "{{ .ProjectName }}_{{ .Os }}_{{ .Arch }}"
+    format_overrides:
+      - goos: windows
+        format: zip
+
+checksum:
+  name_template: "checksums.txt"
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"
+      - "^chore:"
+
+release:
+  github:
+    owner: keinar
+    name: aac-cli
+  draft: false
+  prerelease: auto
