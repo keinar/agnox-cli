@@ -1,12 +1,13 @@
 # AAC CLI
 
-> **Agnostic Automation Center CLI** – Prepare any test automation repository to run seamlessly inside the AAC containerized platform.
+> **Agnostic Automation Center CLI** — Prepare any test automation repository to run seamlessly inside the AAC containerized platform.
 
 [![Release](https://github.com/keinar/aac-cli/actions/workflows/release.yml/badge.svg)](https://github.com/keinar/aac-cli/actions/workflows/release.yml)
+[![npm](https://img.shields.io/npm/v/aac-cli)](https://www.npmjs.com/package/aac-cli)
 
 ## What It Does
 
-`aac init` generates the integration files your test automation project needs to run inside the AAC platform:
+`aac-cli init` generates the integration files your test automation project needs to run inside the AAC platform:
 
 | File | Purpose |
 |---|---|
@@ -19,24 +20,17 @@
 - **Playwright** (TypeScript / Node.js)
 - **Pytest** (Python)
 
-## Installation
-
-### macOS / Linux
+## Quick Start
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/keinar/aac-cli/main/install.sh | sh
+# No installation needed — run directly with npx
+npx aac-cli init
 ```
 
-### Windows (PowerShell)
-
-```powershell
-irm https://raw.githubusercontent.com/keinar/aac-cli/main/install.ps1 | iex
-```
-
-### From Source
+## Installation (optional)
 
 ```bash
-go install github.com/keinar/aac-cli@latest
+npm install -g aac-cli
 ```
 
 ## Usage
@@ -44,15 +38,15 @@ go install github.com/keinar/aac-cli@latest
 ```bash
 # Initialize AAC integration in your project directory
 cd my-playwright-tests
-aac init
+aac-cli init
 
 # Check version
-aac version
+aac-cli --version
 ```
 
 ## How It Works
 
-1. Run `aac init` inside your test project.
+1. Run `aac-cli init` inside your test project.
 2. Select your framework (Playwright or Pytest).
 3. The CLI generates `Dockerfile`, `entrypoint.sh`, and `.dockerignore`.
 4. Build & push your Docker image.
@@ -61,11 +55,9 @@ aac version
 ## Development
 
 ```bash
-# Build
-go build -o aac .
-
-# Run
-./aac init
+npm install
+npm run build
+node dist/index.js init
 ```
 
 ## Release
@@ -77,7 +69,7 @@ git tag v1.0.0
 git push origin v1.0.0
 ```
 
-GoReleaser will cross-compile for Windows, macOS, and Linux (amd64 + arm64) and publish the release on GitHub.
+The workflow will build with tsup, publish to npm, and create a GitHub release.
 
 ## License
 

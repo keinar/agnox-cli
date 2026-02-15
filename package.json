@@ -1,0 +1,46 @@
+{
+    "name": "@keinar/aac-cli",
+    "version": "1.0.0",
+    "description": "Agnostic Automation Center CLI — Prepare any test automation repo for the AAC platform",
+    "author": "keinar",
+    "license": "MIT",
+    "type": "module",
+    "bin": {
+        "aac-cli": "./dist/index.cjs"
+    },
+    "files": [
+        "dist"
+    ],
+    "scripts": {
+        "dev": "tsup --watch",
+        "build": "tsup",
+        "typecheck": "tsc --noEmit",
+        "prepublishOnly": "npm run build"
+    },
+    "dependencies": {
+        "@clack/prompts": "^0.9.1",
+        "commander": "^13.1.0",
+        "picocolors": "^1.1.1"
+    },
+    "devDependencies": {
+        "@types/node": "^22.13.4",
+        "tsup": "^8.4.0",
+        "typescript": "^5.7.3"
+    },
+    "engines": {
+        "node": ">=18"
+    },
+    "keywords": [
+        "cli",
+        "automation",
+        "testing",
+        "docker",
+        "playwright",
+        "pytest",
+        "aac"
+    ],
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/keinar/aac-cli.git"
+    }
+}

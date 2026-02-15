@@ -1,8 +1,7 @@
-# Binaries
-aac
-aac.exe
+# Dependencies
+node_modules/
 
-# GoReleaser output
+# Build output
 dist/
 
 # IDE
@@ -15,5 +14,5 @@ dist/
 .DS_Store
 Thumbs.db
 
-# Dependencies
-vendor/
+# Environment
+.env
