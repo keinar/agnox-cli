@@ -1,6 +1,6 @@
 {
     "name": "@keinar/aac-cli",
-    "version": "1.1.1",
+    "version": "1.1.3",
     "description": "Agnostic Automation Center CLI — Prepare any test automation repo for the AAC platform",
     "author": "keinar",
     "license": "MIT",

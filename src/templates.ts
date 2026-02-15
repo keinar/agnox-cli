@@ -26,12 +26,14 @@ if [ -f .env ]; then
   rm .env
 fi
 
+echo "Running against BASE_URL: $BASE_URL"
+
 if [ -z "$FOLDER" ] || [ "$FOLDER" = "all" ]; then
   echo "Running ALL tests..."
-  exec npx playwright test
+  npx playwright test
 else
   echo "Running tests in folder: $FOLDER"
-  exec npx playwright test "$FOLDER"
+  npx playwright test "$FOLDER"
 fi
 `;
 
@@ -60,10 +62,10 @@ fi
 
 if [ -z "$FOLDER" ] || [ "$FOLDER" = "all" ]; then
   echo "Running ALL tests..."
-  exec pytest
+  pytest
 else
   echo "Running tests in folder: $FOLDER"
-  exec pytest "$FOLDER"
+  pytest "$FOLDER"
 fi
 `;
 
