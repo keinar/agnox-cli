@@ -1,5 +1,9 @@
-// Playwright Dockerfile template
-export const PLAYWRIGHT_DOCKERFILE = `FROM mcr.microsoft.com/playwright:v1.50.0-jammy
+/** Default Playwright image version used when detection fails. */
+export const PLAYWRIGHT_DEFAULT_VERSION = "1.50.0";
+
+/** Generates the Playwright Dockerfile with a dynamic image version. */
+export function playwrightDockerfile(version: string): string {
+  return `FROM mcr.microsoft.com/playwright:v${version}-jammy
 
 WORKDIR /app
 
@@ -10,6 +14,7 @@ COPY . .
 
 RUN chmod +x /app/entrypoint.sh
 `;
+}
 
 // Playwright entrypoint.sh template
 export const PLAYWRIGHT_ENTRYPOINT = `#!/bin/sh

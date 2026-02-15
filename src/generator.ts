@@ -1,10 +1,11 @@
-import { writeFile, stat } from "node:fs/promises";
+import { writeFile, readFile, stat } from "node:fs/promises";
 import { join } from "node:path";
 import * as p from "@clack/prompts";
 import pc from "picocolors";
 import {
     DOCKERIGNORE,
-    PLAYWRIGHT_DOCKERFILE,
+    PLAYWRIGHT_DEFAULT_VERSION,
+    playwrightDockerfile,
     PLAYWRIGHT_ENTRYPOINT,
     PYTEST_DOCKERFILE,
     PYTEST_ENTRYPOINT,
@@ -22,10 +23,47 @@ interface FileSpec {
 }
 
 /**
+ * Detects the @playwright/test version from the project's package.json.
+ * Strips semver prefixes (^, ~, >=, etc.) and returns the raw version.
+ * Returns the default version if detection fails.
+ */
+async function detectPlaywrightVersion(dir: string): Promise<string> {
+    try {
+        const raw = await readFile(join(dir, "package.json"), "utf-8");
+        const pkg = JSON.parse(raw) as Record<string, Record<string, string>>;
+        const version =
+            pkg.devDependencies?.["@playwright/test"] ??
+            pkg.dependencies?.["@playwright/test"];
+
+        if (!version) return PLAYWRIGHT_DEFAULT_VERSION;
+
+        // Strip leading semver range characters: ^, ~, >=, =, v
+        const clean = version.replace(/^[^\d]*/, "");
+        return clean || PLAYWRIGHT_DEFAULT_VERSION;
+    } catch {
+        return PLAYWRIGHT_DEFAULT_VERSION;
+    }
+}
+
+/**
  * Returns the ordered list of files to generate for the given framework.
  */
-function getFiles(framework: Framework): FileSpec[] {
+async function getFiles(
+    framework: Framework,
+    targetDir: string
+): Promise<FileSpec[]> {
     const isPlaywright = framework === "playwright";
+
+    let dockerfile: string;
+    if (isPlaywright) {
+        const version = await detectPlaywrightVersion(targetDir);
+        p.log.info(
+            `Detected Playwright version: ${pc.cyan("v" + version)}`
+        );
+        dockerfile = playwrightDockerfile(version);
+    } else {
+        dockerfile = PYTEST_DOCKERFILE;
+    }
 
     return [
         { name: ".dockerignore", content: DOCKERIGNORE, mode: 0o644 },
@@ -36,7 +74,7 @@ function getFiles(framework: Framework): FileSpec[] {
         },
         {
             name: "Dockerfile",
-            content: isPlaywright ? PLAYWRIGHT_DOCKERFILE : PYTEST_DOCKERFILE,
+            content: dockerfile,
             mode: 0o644,
         },
     ];
@@ -70,7 +108,7 @@ export async function generate(
     framework: Framework,
     targetDir: string
 ): Promise<void> {
-    const files = getFiles(framework);
+    const files = await getFiles(framework, targetDir);
     const skipped = new Set<string>();
 
     // Detect conflicts and prompt for each.
