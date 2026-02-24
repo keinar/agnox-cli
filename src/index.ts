@@ -7,19 +7,19 @@ import { deploy } from "./deployer.js";
 const program = new Command();
 
 program
-    .name("aac-cli")
+    .name("agnox-cli")
     .description(
-        "Agnostic Automation Center CLI — Prepare any test automation repo for the AAC platform"
+        "Agnox CLI — Prepare any test automation repo for the Agnox platform"
     )
     .version("1.1.0");
 
 program
     .command("init")
     .description(
-        "Generate AAC integration files and optionally build & push your Docker image"
+        "Generate Agnox integration files and optionally build & push your Docker image"
     )
     .action(async () => {
-        p.intro(pc.bgCyan(pc.black(" AAC CLI ")));
+        p.intro(pc.bgCyan(pc.black(" Agnox CLI ")));
 
         // --- Framework selection ---
         const framework = (await p.select({
@@ -43,12 +43,12 @@ program
 
         // --- File generation ---
         const s = p.spinner();
-        s.start("Generating AAC integration files...");
+        s.start("Generating Agnox integration files...");
         await new Promise((resolve) => setTimeout(resolve, 300));
         s.stop("Files ready.");
 
         const targetDir = process.cwd();
-        await generate(framework, targetDir);
+        const platforms = await generate(framework, targetDir);
 
         // --- Deployment flow ---
         const shouldDeploy = await p.confirm({
@@ -61,11 +61,11 @@ program
         }
 
         if (shouldDeploy) {
-            await deploy(targetDir);
+            await deploy(targetDir, platforms);
         }
 
         p.outro(
-            pc.green("Done!") + " " + pc.dim("Run `aac-cli init` again anytime.")
+            pc.green("Done!") + " " + pc.dim("Run `agnox-cli init` again anytime.")
         );
     });
 

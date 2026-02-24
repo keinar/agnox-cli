@@ -1,12 +1,12 @@
 {
-    "name": "@keinar/aac-cli",
-    "version": "1.1.3",
-    "description": "Agnostic Automation Center CLI — Prepare any test automation repo for the AAC platform",
+    "name": "@agnox/agnox-cli",
+    "version": "1.2.2",
+    "description": "Agnox CLI — Prepare any test automation repo for the Agnox platform",
     "author": "keinar",
     "license": "MIT",
     "type": "module",
     "bin": {
-        "aac-cli": "./dist/index.cjs"
+        "agnox-cli": "./dist/index.cjs"
     },
     "files": [
         "dist"
@@ -41,6 +41,6 @@
     ],
     "repository": {
         "type": "git",
-        "url": "https://github.com/keinar/aac-cli.git"
+        "url": "https://github.com/keinar/agnox-cli.git"
     }
 }

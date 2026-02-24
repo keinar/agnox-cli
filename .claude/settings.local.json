@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cd \"C:\\\\Users\\\\keina\\\\OneDrive\\\\Documents\\\\GitHub\\\\Automation Projects\\\\aac-cli\" && npm run typecheck 2>&1)"
+    ]
+  }
+}

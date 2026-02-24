@@ -21,10 +21,12 @@ async function detectProjectName(dir: string): Promise<string | null> {
 }
 
 /**
- * Runs the interactive Docker deployment flow:
  * Docker Hub account check → username → project name → login → buildx build & push.
  */
-export async function deploy(targetDir: string): Promise<void> {
+export async function deploy(
+    targetDir: string,
+    platforms: string[] = ["linux/amd64", "linux/arm64"]
+): Promise<void> {
     // --- Docker Hub account check ---
     const hasAccount = await p.confirm({
         message: "Do you have a Docker Hub account?",
@@ -126,17 +128,19 @@ export async function deploy(targetDir: string): Promise<void> {
         }
     }
 
+    const platformFlag = platforms.join(",");
+
     // --- Build & push confirmation ---
     const shouldBuild = await p.confirm({
-        message: `Build multi-platform image ${pc.cyan(fullImage)} and push to Docker Hub?`,
+        message: `Build multi-platform image ${pc.cyan(fullImage)} for ${pc.yellow(platformFlag)} and push to Docker Hub?`,
     });
 
     if (p.isCancel(shouldBuild) || !shouldBuild) {
         p.log.warn("Build skipped.");
         p.note(
             [
-                `${pc.bold("1.")} docker buildx create --name aac-builder --use`,
-                `${pc.bold("2.")} docker buildx build --platform linux/amd64,linux/arm64 -t ${fullImage} --push .`,
+                `${pc.bold("1.")} docker buildx create --name agnox-builder --use`,
+                `${pc.bold("2.")} docker buildx build --platform ${platformFlag} -t ${fullImage} --push .`,
             ].join("\n"),
             "You can build manually later"
         );
@@ -148,7 +152,7 @@ export async function deploy(targetDir: string): Promise<void> {
 
     try {
         s.start("Setting up Docker Buildx builder...");
-        execSync("docker buildx create --name aac-builder --use", {
+        execSync("docker buildx create --name agnox-builder --use", {
             stdio: "pipe",
             cwd: targetDir,
         });
@@ -162,13 +166,13 @@ export async function deploy(targetDir: string): Promise<void> {
 
     try {
         execSync(
-            `docker buildx build --platform linux/amd64,linux/arm64 -t ${fullImage} --push .`,
+            `docker buildx build --platform ${platformFlag} -t ${fullImage} --push .`,
             { stdio: "inherit", cwd: targetDir }
         );
         p.log.success(`Image ${pc.green(fullImage)} pushed successfully!`);
 
         p.note(
-            `Go to the ${pc.bold("AAC Dashboard")} and enter:\n${pc.cyan(fullImage)}`,
+            `Go to the ${pc.bold("Agnox Dashboard")} and enter:\n${pc.cyan(fullImage)}`,
             pc.green("✅ Deployment Complete")
         );
     } catch {
