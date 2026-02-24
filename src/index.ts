@@ -11,7 +11,7 @@ program
     .description(
         "Agnox CLI — Prepare any test automation repo for the Agnox platform"
     )
-    .version("1.1.0");
+    .version("2.0.4");
 
 program
     .command("init")
