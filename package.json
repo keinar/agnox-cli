@@ -1,6 +1,6 @@
 {
     "name": "@agnox/agnox-cli",
-    "version": "1.2.2",
+    "version": "2.0.1",
     "description": "Agnox CLI — Prepare any test automation repo for the Agnox platform",
     "author": "keinar",
     "license": "MIT",
