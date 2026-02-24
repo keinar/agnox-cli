@@ -25,91 +25,16 @@ async function detectProjectName(dir: string): Promise<string | null> {
  */
 export async function deploy(
     targetDir: string,
+    username: string,
+    projectName: string,
     platforms: string[] = ["linux/amd64", "linux/arm64"]
 ): Promise<void> {
-    // --- Docker Hub account check ---
-    const hasAccount = await p.confirm({
-        message: "Do you have a Docker Hub account?",
-    });
-
-    if (p.isCancel(hasAccount)) {
-        p.cancel("Deployment cancelled.");
-        return;
-    }
-
-    if (!hasAccount) {
-        p.note(
-            `Create a free account at ${pc.cyan("https://hub.docker.com")}\nPress Enter when you're ready to continue.`,
-            pc.yellow("Docker Hub Account Required")
-        );
-        await p.text({
-            message: "Press Enter to continue...",
-            defaultValue: "",
-            placeholder: "",
-        });
-    }
-
-    // --- Docker Hub username ---
-    const username = await p.text({
-        message: "What is your Docker Hub username?",
-        validate: (val) => {
-            if (!val.trim()) return "Username is required.";
-        },
-    });
-
-    if (p.isCancel(username)) {
-        p.cancel("Deployment cancelled.");
-        return;
-    }
-
-    // --- Project name detection ---
-    const detected = await detectProjectName(targetDir);
-    let projectName: string;
-
-    if (detected) {
-        const useDetected = await p.confirm({
-            message: `Detected project name "${pc.cyan(detected)}". Use this for the image?`,
-        });
-
-        if (p.isCancel(useDetected)) {
-            p.cancel("Deployment cancelled.");
-            return;
-        }
-
-        if (useDetected) {
-            projectName = detected;
-        } else {
-            const custom = await p.text({
-                message: "Enter the image name:",
-                validate: (val) => {
-                    if (!val.trim()) return "Image name is required.";
-                },
-            });
-            if (p.isCancel(custom)) {
-                p.cancel("Deployment cancelled.");
-                return;
-            }
-            projectName = custom.trim();
-        }
-    } else {
-        const custom = await p.text({
-            message: "Enter the image name:",
-            validate: (val) => {
-                if (!val.trim()) return "Image name is required.";
-            },
-        });
-        if (p.isCancel(custom)) {
-            p.cancel("Deployment cancelled.");
-            return;
-        }
-        projectName = custom.trim();
-    }
 
     const fullImage = `${username.trim()}/${projectName}:latest`;
 
     // --- Docker login ---
     const shouldLogin = await p.confirm({
-        message: "I need to log you into Docker. Send a login request?",
+        message: `I need to log you into Docker as ${pc.cyan(username)}. Send request?`,
     });
 
     if (p.isCancel(shouldLogin)) {

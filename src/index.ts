@@ -1,7 +1,7 @@
 import { Command } from "commander";
 import * as p from "@clack/prompts";
 import pc from "picocolors";
-import { generate, detectFramework, type Framework } from "./generator.js";
+import { generate, detectFramework, getProjectName, type Framework } from "./generator.js";
 import { deploy } from "./deployer.js";
 
 const program = new Command();
@@ -65,6 +65,48 @@ program
             }
         }
 
+        // --- Identity Collection ---
+        const username = await p.text({
+            message: "What is your Docker Hub username?",
+            validate: (val) => {
+                if (!val.trim()) return "Username is required.";
+            },
+        });
+
+        if (p.isCancel(username)) {
+            p.cancel("Operation cancelled.");
+            process.exit(0);
+        }
+
+        const detectedName = await getProjectName(targetDir);
+        let projectName: string;
+
+        const useDetectedName = await p.confirm({
+            message: `Detected project name "${pc.cyan(detectedName)}". Use this for the image?`,
+            initialValue: true,
+        });
+
+        if (p.isCancel(useDetectedName)) {
+            p.cancel("Operation cancelled.");
+            process.exit(0);
+        }
+
+        if (useDetectedName) {
+            projectName = detectedName;
+        } else {
+            const custom = await p.text({
+                message: "Enter the image name:",
+                validate: (val) => {
+                    if (!val.trim()) return "Image name is required.";
+                },
+            });
+            if (p.isCancel(custom)) {
+                p.cancel("Operation cancelled.");
+                process.exit(0);
+            }
+            projectName = custom.trim();
+        }
+
         // --- File generation ---
         const s = p.spinner();
         s.start("Generating Agnox integration files...");
@@ -72,7 +114,7 @@ program
         s.stop("Files ready.");
 
         // We cast to Framework because we've handled the cancel/symbol cases above
-        const platforms = await generate(framework as Framework, targetDir);
+        const platforms = await generate(framework as Framework, targetDir, username as string, projectName);
 
         // --- Deployment flow ---
         const shouldDeploy = await p.confirm({
@@ -85,7 +127,7 @@ program
         }
 
         if (shouldDeploy) {
-            await deploy(targetDir, platforms);
+            await deploy(targetDir, username as string, projectName, platforms);
         }
 
         p.outro(

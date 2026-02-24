@@ -68,7 +68,7 @@ export async function detectFramework(dir: string): Promise<Framework | null> {
     return null;
 }
 
-async function getProjectName(dir: string): Promise<string> {
+export async function getProjectName(dir: string): Promise<string> {
     try {
         const raw = await readFile(join(dir, "package.json"), "utf-8");
         const pkg = JSON.parse(raw);
@@ -274,15 +274,16 @@ function enforceLF(content: string): string {
  */
 export async function generate(
     framework: Framework,
-    targetDir: string
+    targetDir: string,
+    username: string,
+    projectName: string
 ): Promise<string[]> {
     const { files, platforms } = await getFiles(framework, targetDir);
-    const projectName = await getProjectName(targetDir);
     const skipped = new Set<string>();
 
 
     const platformFlag = platforms.length ? ` --platform ${platforms.join(",")}` : "";
-    const imageTag = `your-dockerhub-username/${projectName}:latest`;
+    const imageTag = `${username.trim()}/${projectName}:latest`;
 
     p.note(
         [
