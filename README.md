@@ -52,6 +52,9 @@ graph LR
 ### 🧠 **Smart Framework Detection**
 Automatically detects frameworks (Playwright, Pytest) and reads your `package.json` to extract exact versions. Zero-config environments without mismatched browser binaries. Playwright versions are dynamically pinned to `mcr.microsoft.com/playwright:v{version}-jammy` to guarantee flawless execution.
 
+### 🐍 **Advanced Python/Pytest Analysis**
+For Pytest projects, the CLI automatically detects `allure-pytest` configurations, extracts required browser binaries from a `browsers.json` or requirements file, and enforces platform constraints (`linux/amd64` vs `linux/arm64`) directly tied to your python image architecture.
+
 ### 🏗️ **Modern Architecture**
 Built for the future. Effortlessly supports multi-platform `buildx` execution (`linux/amd64`, `linux/arm64`), ensuring universal compatibility across any Agnox worker node anywhere in the world.
 
@@ -66,7 +69,10 @@ We use stunning `@clack/prompts` to guide you through the process frictionlessly
 
 ```text
 │
-◇  Welcome to Agnox CLI v2.0.x
+◇  Welcome to Agnox CLI v2.0.7
+│
+◇  Please enter your Agnox Identity Token (found in your Dashboard settings):
+│  ■■■■■■■■■■■■■■■■■■■■■
 │
 ◇  Which testing framework does this project use?
 │  ● Playwright
@@ -80,7 +86,7 @@ We use stunning `@clack/prompts` to guide you through the process frictionlessly
 │
 ◇  Successfully pushed to Docker Hub!
 │
-└  Ready. Enter your image name in the Agnox Dashboard to begin execution.
+└  Ready. Your identity is linked and the image is ready for the Agnox Dashboard!
 ```
 
 ---
@@ -135,8 +141,16 @@ node dist/index.cjs init
 
 ## 📈 Version History
 
-- **v2.0.x**: The "Futuristic" Update. Complete rebrand to Agnox, intelligent framework detection, multi-platform buildx execution, `@clack/prompts` integration, and native AI capabilities.
+- **v2.0.7**: The "Futuristic" Update. Complete rebrand to Agnox, intelligent framework detection, multi-platform buildx execution, `@clack/prompts` integration, identity collection, and native AI capabilities.
 - **v1.1.x**: Initial release with base Playwright/Pytest generation.
+
+---
+
+## 🤝 Join the Pilot
+
+Agnox is actively inviting forward-thinking companies to join our pilot program. Experience firsthand how our AI-driven deterministic execution engine transforms test failures into immediate bug fixes. 
+
+**[Request a Live Demo Today](mailto:hello@agnox.io)**
 
 ---
 
