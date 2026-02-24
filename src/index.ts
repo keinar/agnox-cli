@@ -1,7 +1,7 @@
 import { Command } from "commander";
 import * as p from "@clack/prompts";
 import pc from "picocolors";
-import { generate, type Framework } from "./generator.js";
+import { generate, detectFramework, type Framework } from "./generator.js";
 import { deploy } from "./deployer.js";
 
 const program = new Command();
@@ -21,24 +21,48 @@ program
     .action(async () => {
         p.intro(pc.bgCyan(pc.black(" Agnox CLI ")));
 
-        // --- Framework selection ---
-        const framework = (await p.select({
-            message: "Select your automation project framework:",
-            options: [
-                {
-                    value: "playwright",
-                    label: "Playwright (TypeScript/Node.js)",
-                },
-                {
-                    value: "pytest",
-                    label: "Pytest (Python)",
-                },
-            ],
-        })) as Framework | symbol;
+        const targetDir = process.cwd();
 
-        if (p.isCancel(framework)) {
-            p.cancel("Operation cancelled.");
-            process.exit(0);
+        // --- Smart Detection ---
+        const detected = await detectFramework(targetDir);
+        let framework: Framework | symbol | null = null;
+
+        if (detected) {
+            const useDetected = await p.confirm({
+                message: `Detected ${pc.cyan(detected.toUpperCase())} project. Use this framework?`,
+                initialValue: true,
+            });
+
+            if (p.isCancel(useDetected)) {
+                p.cancel("Operation cancelled.");
+                process.exit(0);
+            }
+
+            if (useDetected) {
+                framework = detected;
+            }
+        }
+
+        // --- Manual selection (if detection failed or was declined) ---
+        if (!framework) {
+            framework = (await p.select({
+                message: "Select your automation project framework:",
+                options: [
+                    {
+                        value: "playwright",
+                        label: "Playwright (TypeScript/Node.js)",
+                    },
+                    {
+                        value: "pytest",
+                        label: "Pytest (Python)",
+                    },
+                ],
+            })) as Framework | symbol;
+
+            if (p.isCancel(framework)) {
+                p.cancel("Operation cancelled.");
+                process.exit(0);
+            }
         }
 
         // --- File generation ---
@@ -47,8 +71,8 @@ program
         await new Promise((resolve) => setTimeout(resolve, 300));
         s.stop("Files ready.");
 
-        const targetDir = process.cwd();
-        const platforms = await generate(framework, targetDir);
+        // We cast to Framework because we've handled the cancel/symbol cases above
+        const platforms = await generate(framework as Framework, targetDir);
 
         // --- Deployment flow ---
         const shouldDeploy = await p.confirm({

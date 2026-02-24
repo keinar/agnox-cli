@@ -29,6 +29,56 @@ interface GenerationResult {
 }
 
 /**
+ * Smartly detects the automation framework based on project markers.
+ */
+export async function detectFramework(dir: string): Promise<Framework | null> {
+    // 1. Check for Playwright (Node.js)
+    try {
+        const hasPkgJson = await fileExists(join(dir, "package.json"));
+        if (hasPkgJson) {
+            const raw = await readFile(join(dir, "package.json"), "utf-8");
+            const pkg = JSON.parse(raw);
+            if (pkg.devDependencies?.["@playwright/test"] || pkg.dependencies?.["@playwright/test"]) {
+                return "playwright";
+            }
+        }
+        // Fallback: Check for config file
+        if (await fileExists(join(dir, "playwright.config.ts")) || await fileExists(join(dir, "playwright.config.js"))) {
+            return "playwright";
+        }
+    } catch (e) { /* ignore */ }
+
+    // 2. Check for Pytest
+    try {
+        if (await fileExists(join(dir, "pytest.ini")) || await fileExists(join(dir, "conftest.py"))) {
+            return "pytest";
+        }
+        // Check requirements.txt or pyproject.toml
+        if (await fileExists(join(dir, "requirements.txt"))) {
+            const reqs = await readFile(join(dir, "requirements.txt"), "utf-8");
+            if (reqs.includes("pytest")) return "pytest";
+        }
+        if (await fileExists(join(dir, "pyproject.toml"))) {
+            const toml = await readFile(join(dir, "pyproject.toml"), "utf-8");
+            if (toml.includes("pytest")) return "pytest";
+        }
+    } catch (e) { /* ignore */ }
+
+    // Add more detections here (Cypress, Puppeteer, etc.) as you expand
+    return null;
+}
+
+async function getProjectName(dir: string): Promise<string> {
+    try {
+        const raw = await readFile(join(dir, "package.json"), "utf-8");
+        const pkg = JSON.parse(raw);
+        return pkg.name?.replace(/^@[^/]+\//, "") || "my-automation-project";
+    } catch {
+        return dir.split(/[\\/]/).pop() || "my-automation-project";
+    }
+}
+
+/**
  * Detects the @playwright/test version from the project's package.json.
  * Strips semver prefixes (^, ~, >=, etc.) and returns the raw version.
  * Returns the default version if detection fails.
@@ -227,59 +277,19 @@ export async function generate(
     targetDir: string
 ): Promise<string[]> {
     const { files, platforms } = await getFiles(framework, targetDir);
+    const projectName = await getProjectName(targetDir);
     const skipped = new Set<string>();
 
-    // Detect conflicts and prompt for each.
-    for (const file of files) {
-        const fullPath = join(targetDir, file.name);
-        if (await fileExists(fullPath)) {
-            const overwrite = await p.confirm({
-                message: `File ${pc.yellow(file.name)} already exists. Overwrite?`,
-            });
 
-            if (p.isCancel(overwrite)) {
-                p.cancel("Operation cancelled.");
-                process.exit(0);
-            }
-
-            if (!overwrite) {
-                skipped.add(file.name);
-            }
-        }
-    }
-
-    // Abort gracefully if every file was skipped.
-    if (skipped.size === files.length) {
-        p.log.warn("All files were skipped. No changes were made.");
-        return platforms;
-    }
-
-    // Write files.
-    const written: string[] = [];
-
-    for (const file of files) {
-        if (skipped.has(file.name)) continue;
-
-        const fullPath = join(targetDir, file.name);
-        const content = enforceLF(file.content);
-
-        await writeFile(fullPath, content, { mode: file.mode });
-        written.push(file.name);
-    }
-
-    // Print results.
-    for (const name of written) {
-        p.log.success(`Created ${pc.green(name)}`);
-    }
-
-    // Print next steps.
     const platformFlag = platforms.length ? ` --platform ${platforms.join(",")}` : "";
+    const imageTag = `your-dockerhub-username/${projectName}:latest`;
 
     p.note(
         [
-            `${pc.bold("1.")} docker build${platformFlag} -t your-username/my-automation-tests:latest .`,
-            `${pc.bold("2.")} docker push your-username/my-automation-tests:latest`,
-            `${pc.bold("3.")} Enter this image name in the Agnox Dashboard.`,
+            `${pc.dim("Follow these steps to connect your project:")}`,
+            "",
+            `${pc.bold("1.")} docker buildx build${platformFlag} -t ${pc.cyan(imageTag)} --push .`,
+            `${pc.bold("2.")} Enter the image name ${pc.cyan(imageTag)} in the Agnox Dashboard.`,
         ].join("\n"),
         `${pc.green("✅")} Next steps to connect your project to Agnox`
     );
