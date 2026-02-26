@@ -85,11 +85,53 @@ export async function getProjectName(dir: string): Promise<string> {
  */
 async function detectPlaywrightVersion(dir: string): Promise<string> {
     try {
+        // 1. Try package-lock.json first
+        try {
+            const lockPath = join(dir, "package-lock.json");
+            if (await fileExists(lockPath)) {
+                const lockRaw = await readFile(lockPath, "utf-8");
+                const lockData = JSON.parse(lockRaw);
+                const version = lockData.packages?.["node_modules/@playwright/test"]?.version ||
+                    lockData.packages?.["node_modules/playwright"]?.version ||
+                    lockData.dependencies?.["@playwright/test"]?.version ||
+                    lockData.dependencies?.["playwright"]?.version;
+                if (version) return version;
+            }
+        } catch { /* ignore error parsing package-lock */ }
+
+        // 2. Try yarn.lock
+        try {
+            const yarnPath = join(dir, "yarn.lock");
+            if (await fileExists(yarnPath)) {
+                const yarnRaw = await readFile(yarnPath, "utf-8");
+                const matchPwt = yarnRaw.match(/@playwright\/test@[^:]+:\n\s*version "?([^"\n]+)"?/);
+                if (matchPwt && matchPwt[1]) return matchPwt[1];
+                const matchPw = yarnRaw.match(/playwright@[^:]+:\n\s*version "?([^"\n]+)"?/);
+                if (matchPw && matchPw[1]) return matchPw[1];
+            }
+        } catch { /* ignore error parsing yarn lock */ }
+
+        // 3. Try pnpm-lock.yaml
+        try {
+            const pnpmPath = join(dir, "pnpm-lock.yaml");
+            if (await fileExists(pnpmPath)) {
+                const pnpmRaw = await readFile(pnpmPath, "utf-8");
+                const matchPwt = pnpmRaw.match(/'?@playwright\/test'?:\n\s+specifier:.*\n\s+version: ([\d\.]+)/) ||
+                    pnpmRaw.match(/@playwright\/test@([\d\.]+)/);
+                if (matchPwt && matchPwt[1]) return matchPwt[1];
+                const matchPw = pnpmRaw.match(/'?playwright'?:\n\s+specifier:.*\n\s+version: ([\d\.]+)/) ||
+                    pnpmRaw.match(/playwright@([\d\.]+)/);
+                if (matchPw && matchPw[1]) return matchPw[1];
+            }
+        } catch { /* ignore error parsing pnpm lock */ }
+
         const raw = await readFile(join(dir, "package.json"), "utf-8");
         const pkg = JSON.parse(raw) as Record<string, Record<string, string>>;
         const version =
             pkg.devDependencies?.["@playwright/test"] ??
-            pkg.dependencies?.["@playwright/test"];
+            pkg.dependencies?.["@playwright/test"] ??
+            pkg.devDependencies?.["playwright"] ??
+            pkg.dependencies?.["playwright"];
 
         if (!version) return PLAYWRIGHT_DEFAULT_VERSION;
 
