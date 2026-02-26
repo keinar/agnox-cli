@@ -281,6 +281,32 @@ export async function generate(
     const { files, platforms } = await getFiles(framework, targetDir);
     const skipped = new Set<string>();
 
+    for (const file of files) {
+        const filePath = join(targetDir, file.name);
+        if (await fileExists(filePath)) {
+            const overwrite = await p.confirm({
+                message: `${file.name} already exists. Overwrite?`,
+            });
+            if (p.isCancel(overwrite) || !overwrite) {
+                skipped.add(file.name);
+                continue;
+            }
+        }
+        await writeFile(filePath, enforceLF(file.content), { mode: file.mode });
+    }
+
+    const dockerfilePath = join(targetDir, "Dockerfile");
+    if (!(await fileExists(dockerfilePath))) {
+        p.log.warn(`Dockerfile missing in ${targetDir}. Generating fallback Dockerfile...`);
+        const fallbackContent = framework === "playwright"
+            ? playwrightDockerfile(PLAYWRIGHT_DEFAULT_VERSION)
+            : "FROM python:3.11-slim\nWORKDIR /app\nCOPY requirements.txt ./\nRUN pip install --no-cache-dir -r requirements.txt\nCOPY . .\nRUN chmod +x /app/entrypoint.sh\n";
+        await writeFile(dockerfilePath, enforceLF(fallbackContent), { mode: 0o644 });
+
+        if (!(await fileExists(dockerfilePath))) {
+            throw new Error(`Critical error: Failed to create Dockerfile in ${targetDir}`);
+        }
+    }
 
     const platformFlag = platforms.length ? ` --platform ${platforms.join(",")}` : "";
     const imageTag = `${username.trim()}/${projectName}:latest`;
