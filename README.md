@@ -141,6 +141,7 @@ node dist/index.cjs init
 
 ## 📈 Version History
 
+- **v2.0.11**: feat: support executing specific spec files directly in entrypoint.sh for Smart PR Routing.
 - **v2.0.7**: The "Futuristic" Update. Complete rebrand to Agnox, intelligent framework detection, multi-platform buildx execution, `@clack/prompts` integration, identity collection, and native AI capabilities.
 - **v1.1.x**: Initial release with base Playwright/Pytest generation.
 

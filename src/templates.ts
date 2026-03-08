@@ -36,7 +36,7 @@ export PLAYWRIGHT_JSON_OUTPUT_NAME=/app/test-results/results.json
 if [ -z "$FOLDER" ] || [ "$FOLDER" = "all" ]; then
   echo "Running ALL tests..."
   npx playwright test $REPORTER_FLAG
-elif [ -d "$FOLDER" ]; then
+elif [ -d "$FOLDER" ] || [ -f "$FOLDER" ]; then
   echo "Running tests in folder: $FOLDER"
   npx playwright test "$FOLDER" $REPORTER_FLAG
 else
