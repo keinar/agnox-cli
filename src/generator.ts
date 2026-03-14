@@ -318,7 +318,8 @@ export async function generate(
     framework: Framework,
     targetDir: string,
     username: string,
-    projectName: string
+    projectName: string,
+    registry?: string
 ): Promise<string[]> {
     const { files, platforms } = await getFiles(framework, targetDir);
     const skipped = new Set<string>();
@@ -351,14 +352,15 @@ export async function generate(
     }
 
     const platformFlag = platforms.length ? ` --platform ${platforms.join(",")}` : "";
-    const imageTag = `${username.trim()}/${projectName}:latest`;
+    const imagePrefix = registry ? `${registry}/` : "";
+    const fullImage = `${imagePrefix}${username.trim()}/${projectName}:latest`;
 
     p.note(
         [
             `${pc.dim("Follow these steps to connect your project:")}`,
             "",
-            `${pc.bold("1.")} docker buildx build${platformFlag} -t ${pc.cyan(imageTag)} --push .`,
-            `${pc.bold("2.")} Enter the image name ${pc.cyan(imageTag)} in the Agnox Dashboard.`,
+            `${pc.bold("1.")} docker buildx build${platformFlag} -t ${pc.cyan(fullImage)} --push .`,
+            `${pc.bold("2.")} Enter the image name ${pc.cyan(fullImage)} in the Agnox Dashboard.`,
         ].join("\n"),
         `${pc.green("✅")} Next steps to connect your project to Agnox`
     );

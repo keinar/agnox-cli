@@ -122,12 +122,20 @@ Need custom build steps? Just choose to generate the integration files without a
 ### Usage
 
 ```bash
-# Run the full init + deploy flow
+# Run the full init + deploy flow (pushes to Docker Hub by default)
 npx @agnox/agnox-cli@latest init
+
+# Push to a private container registry (AWS ECR, Google GAR, GHCR, etc.)
+npx @agnox/agnox-cli@latest init --registry <registry-url>
+npx @agnox/agnox-cli@latest init -r <registry-url>
 
 # Check installed version
 npx @agnox/agnox-cli@latest --version
 ```
+
+| Flag | Alias | Description |
+|------|-------|-------------|
+| `--registry <url>` | `-r` | Target a private container registry instead of Docker Hub. |
 
 ### Local Development
 
@@ -139,8 +147,27 @@ node dist/index.cjs init
 
 ---
 
+## 🏢 Enterprise: Private Registries
+
+By default, the CLI authenticates against **Docker Hub** and pushes your test image there. Enterprise teams can redirect this to any private registry — AWS ECR, Google Artifact Registry, GitHub Container Registry, or a self-hosted registry — by passing the `--registry` flag:
+
+```bash
+npx @agnox/agnox-cli@latest init --registry 123456789.dkr.ecr.us-east-1.amazonaws.com/my-org
+```
+
+What happens under the hood:
+
+1. **Interactive credential prompt** — the CLI will ask for the registry username and password (or token) and run `docker login` against the provided host automatically.
+2. **Correct image tagging** — the image tag is built as `<registry-url>/<project-name>:<timestamp>`, ensuring it is push-ready for your registry without any manual renaming.
+3. **Same multi-platform build** — the `linux/amd64` + `linux/arm64` buildx flow runs identically; only the destination changes.
+
+> **Tip:** For token-based registries (e.g. ECR via `aws ecr get-login-password`), pipe the token in when prompted for the password.
+
+---
+
 ## 📈 Version History
 
+- **v2.0.12**: feat: add `--registry` / `-r` flag for pushing to private container registries (AWS ECR, Google GAR, GHCR).
 - **v2.0.11**: feat: support executing specific spec files directly in entrypoint.sh for Smart PR Routing.
 - **v2.0.7**: The "Futuristic" Update. Complete rebrand to Agnox, intelligent framework detection, multi-platform buildx execution, `@clack/prompts` integration, identity collection, and native AI capabilities.
 - **v1.1.x**: Initial release with base Playwright/Pytest generation.

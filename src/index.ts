@@ -68,7 +68,7 @@ program
 
         // --- Identity Collection ---
         const username = await p.text({
-            message: "What is your Docker Hub username?",
+            message: `What is your ${options.registry || "Docker Hub"} username?`,
             validate: (val) => {
                 if (!val.trim()) return "Username is required.";
             },
@@ -115,11 +115,11 @@ program
         s.stop("Files ready.");
 
         // We cast to Framework because we've handled the cancel/symbol cases above
-        const platforms = await generate(framework as Framework, targetDir, username as string, projectName);
+        const platforms = await generate(framework as Framework, targetDir, username as string, projectName, options.registry);
 
         // --- Deployment flow ---
         const shouldDeploy = await p.confirm({
-            message: "Do you want to build and push the image to Docker Hub right now?",
+            message: `Do you want to build and push the image to ${options.registry || "Docker Hub"} right now?`,
         });
 
         if (p.isCancel(shouldDeploy)) {
