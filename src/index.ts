@@ -18,7 +18,8 @@ program
     .description(
         "Generate Agnox integration files and optionally build & push your Docker image"
     )
-    .action(async () => {
+    .option("-r, --registry <url>", "Private container registry URL (e.g., ghcr.io)")
+    .action(async (options) => {
         p.intro(pc.bgCyan(pc.black(" Agnox CLI ")));
 
         const targetDir = process.cwd();
@@ -127,7 +128,7 @@ program
         }
 
         if (shouldDeploy) {
-            await deploy(targetDir, username as string, projectName, platforms);
+            await deploy(targetDir, username as string, projectName, platforms, options.registry);
         }
 
         p.outro(

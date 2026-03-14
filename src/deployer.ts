@@ -27,14 +27,16 @@ export async function deploy(
     targetDir: string,
     username: string,
     projectName: string,
-    platforms: string[] = ["linux/amd64", "linux/arm64"]
+    platforms: string[] = ["linux/amd64", "linux/arm64"],
+    registry?: string
 ): Promise<void> {
 
-    const fullImage = `${username.trim()}/${projectName}:latest`;
+    const imagePrefix = registry ? `${registry}/` : "";
+    const fullImage = `${imagePrefix}${username.trim()}/${projectName}:latest`;
 
     // --- Docker login ---
     const shouldLogin = await p.confirm({
-        message: `I need to log you into Docker as ${pc.cyan(username)}. Send request?`,
+        message: `I need to log you into Docker (or ${pc.cyan(registry ?? "Docker Hub")}) as ${pc.cyan(username)}. Send request?`,
     });
 
     if (p.isCancel(shouldLogin)) {
@@ -45,7 +47,7 @@ export async function deploy(
     if (shouldLogin) {
         p.log.step("Opening Docker login...");
         try {
-            execSync("docker login", { stdio: "inherit", cwd: targetDir });
+            execSync(registry ? `docker login ${registry}` : "docker login", { stdio: "inherit", cwd: targetDir });
             p.log.success("Docker login successful.");
         } catch {
             p.log.error("Docker login failed. Please try again manually.");
