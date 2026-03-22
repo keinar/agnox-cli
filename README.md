@@ -69,7 +69,7 @@ We use stunning `@clack/prompts` to guide you through the process frictionlessly
 
 ```text
 │
-◇  Welcome to Agnox CLI v2.0.7
+◇  Welcome to Agnox CLI v2.0.12
 │
 ◇  Please enter your Agnox Identity Token (found in your Dashboard settings):
 │  ■■■■■■■■■■■■■■■■■■■■■
