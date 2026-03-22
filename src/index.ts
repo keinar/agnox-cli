@@ -1,3 +1,4 @@
+import { execSync } from "node:child_process";
 import { Command } from "commander";
 import * as p from "@clack/prompts";
 import pc from "picocolors";
@@ -134,6 +135,99 @@ program
         p.outro(
             pc.green("Done!") + " " + pc.dim("Run `agnox-cli init` again anytime.")
         );
+    });
+
+program
+    .command("push")
+    .description("Build and push your Docker image without scaffolding files")
+    .option("-i, --image <tag>", "Target image tag (e.g., username/project:latest). If provided, runs non-interactively.")
+    .action(async (options) => {
+        let imageTag = options.image;
+
+        if (!imageTag) {
+            p.intro(pc.bgCyan(pc.black(" Agnox CLI - Push ")));
+            
+            const targetDir = process.cwd();
+            
+            const username = await p.text({
+                message: "What is your Docker Hub username?",
+                validate: (val) => {
+                    if (!val.trim()) return "Username is required.";
+                },
+            });
+
+            if (p.isCancel(username)) {
+                p.cancel("Operation cancelled.");
+                process.exit(0);
+            }
+
+            const detectedName = await getProjectName(targetDir);
+            let projectName: string;
+
+            const useDetectedName = await p.confirm({
+                message: `Detected project name "${pc.cyan(detectedName)}". Use this for the image?`,
+                initialValue: true,
+            });
+
+            if (p.isCancel(useDetectedName)) {
+                p.cancel("Operation cancelled.");
+                process.exit(0);
+            }
+
+            if (useDetectedName) {
+                projectName = detectedName;
+            } else {
+                const custom = await p.text({
+                    message: "Enter the image name:",
+                    validate: (val) => {
+                        if (!val.trim()) return "Image name is required.";
+                    },
+                });
+                if (p.isCancel(custom)) {
+                    p.cancel("Operation cancelled.");
+                    process.exit(0);
+                }
+                projectName = custom.trim();
+            }
+            
+            imageTag = `${(username as string).trim()}/${projectName}:latest`;
+        }
+
+        const buildS = p.spinner();
+        try {
+            if (!options.image) buildS.start("Setting up Docker Buildx builder...");
+            execSync("docker buildx create --name agnox-builder --use", {
+                stdio: "pipe",
+                cwd: process.cwd(),
+            });
+            if (!options.image) buildS.stop("Buildx builder ready.");
+        } catch {
+            // Builder may already exist — safe to ignore.
+            if (!options.image) buildS.stop("Using existing Buildx builder.");
+        }
+
+        if (!options.image) p.log.step(`Building & pushing ${pc.cyan(imageTag)}...`);
+        
+        try {
+            execSync(
+                `docker buildx build --platform linux/amd64,linux/arm64 -t ${imageTag} --push .`,
+                { stdio: "inherit", cwd: process.cwd() }
+            );
+            if (!options.image) {
+                p.log.success(`Image ${pc.green(imageTag)} pushed successfully!`);
+                p.outro(pc.green("Done!") + " " + pc.dim("Your image is ready for Agnox."));
+            } else {
+                console.log(pc.green(`\n✔ Image ${imageTag} pushed successfully!`));
+            }
+        } catch (err) {
+            if (!options.image) {
+                p.log.error("Docker build failed. Check the output above for details.");
+                process.exit(1);
+            } else {
+                console.error(pc.red(`\n✖ Docker build failed for ${imageTag}.`));
+                process.exit(1);
+            }
+        }
     });
 
 program.parse();

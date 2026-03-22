@@ -125,6 +125,12 @@ Need custom build steps? Just choose to generate the integration files without a
 # Run the full init + deploy flow (pushes to Docker Hub by default)
 npx @agnox/agnox-cli@latest init
 
+# Update and push your Docker image without generating scaffolding files
+npx @agnox/agnox-cli@latest push
+
+# Push your Docker image completely non-interactively (ideal for CI/CD)
+npx @agnox/agnox-cli@latest push -i <username>/<project>:latest
+
 # Push to a private container registry (AWS ECR, Google GAR, GHCR, etc.)
 npx @agnox/agnox-cli@latest init --registry <registry-url>
 npx @agnox/agnox-cli@latest init -r <registry-url>
@@ -142,7 +148,44 @@ npx @agnox/agnox-cli@latest --version
 ```bash
 npm install
 npm run build
-node dist/index.cjs init
+node dist/index.js init
+```
+
+---
+
+## 🤖 CI/CD Integration (GitHub Actions)
+
+You can easily use `agnox push` inside your CI/CD pipelines to automatically build and push your test automation changes to Docker Hub without manual prompts.
+
+```yaml
+name: Deploy Tests to Agnox
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+        
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and Push Tests
+        run: npx @agnox/agnox-cli@latest push -i my-docker-org/my-tests:latest
 ```
 
 ---
