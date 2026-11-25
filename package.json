@@ -1,7 +1,7 @@
 {
     "name": "@agnox/agnox-cli",
-    "version": "2.0.13",
-    "description": "Agnox CLI — Prepare any test automation repo for the Agnox platform",
+    "version": "2.1.0",
+    "description": "Agnox CLI — Scaffold, build and push Docker test images for Agnox Hosted runs",
     "author": "keinar",
     "license": "MIT",
     "type": "module",
@@ -28,7 +28,7 @@
         "typescript": "^5.7.3"
     },
     "engines": {
-        "node": ">=18"
+        "node": ">=20"
     },
     "keywords": [
         "cli",

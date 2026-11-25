@@ -59,7 +59,7 @@ export async function deploy(
 
     // --- Build & push confirmation ---
     const shouldBuild = await p.confirm({
-        message: `Build multi-platform image ${pc.cyan(fullImage)} for ${pc.yellow(platformFlag)} and push to Docker Hub?`,
+        message: `Build multi-platform image ${pc.cyan(fullImage)} for ${pc.yellow(platformFlag)} and push to ${registry ?? "Docker Hub"}?`,
     });
 
     if (p.isCancel(shouldBuild) || !shouldBuild) {
@@ -99,7 +99,7 @@ export async function deploy(
         p.log.success(`Image ${pc.green(fullImage)} pushed successfully!`);
 
         p.note(
-            `Go to the ${pc.bold("Agnox Dashboard")} and enter:\n${pc.cyan(fullImage)}`,
+            `In the Agnox Dashboard, open ${pc.bold("Settings → Run Settings")} and enter:\n${pc.cyan(fullImage)}`,
             pc.green("✅ Deployment Complete")
         );
     } catch {

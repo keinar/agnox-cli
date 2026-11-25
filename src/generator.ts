@@ -7,8 +7,10 @@ import {
     PLAYWRIGHT_DEFAULT_VERSION,
     playwrightDockerfile,
     PLAYWRIGHT_ENTRYPOINT,
+    PYTHON_DEFAULT_VERSION,
     generatePytestDockerfile,
     generatePytestEntrypoint,
+    pytestBaseImage,
 } from "./templates.js";
 import { analyzePythonProject } from "./analyzer.js";
 
@@ -237,8 +239,17 @@ async function getFiles(
             platformSummary += ` ${pc.yellow("(restricted by browser selection)")}`;
         }
 
+        const dockerfileOptions = {
+            pythonVersion: analysis.pythonVersion || PYTHON_DEFAULT_VERSION,
+            packageManager: analysis.packageManager,
+            installPlaywright: analysis.hasPlaywright,
+            playwrightVersion: analysis.playwrightVersion,
+            browserConfig: analysis.browserConfig,
+            extraSystemDeps,
+        };
+
         p.note(
-            `  Base image:     ${analysis.hasPlaywright ? `mcr.microsoft.com/playwright/python:v${analysis.playwrightVersion || PLAYWRIGHT_DEFAULT_VERSION}-jammy` : `python:${analysis.pythonVersion || "3.11"}-slim`}
+            `  Base image:     ${pytestBaseImage(dockerfileOptions)}
   Package mgr:    ${analysis.packageManager}
   Browser:        ${browserSummary}
   Allure:         ${useAllure ? "yes" : "no"}
@@ -260,16 +271,12 @@ ${analysis.browserConfig.warningMessage ? `  ${pc.yellow("⚠️  " + analysis.b
         }
 
         // Generate Content
-        dockerfile = generatePytestDockerfile({
-            pythonVersion: analysis.pythonVersion || "3.11",
-            packageManager: analysis.packageManager,
-            installPlaywright: analysis.hasPlaywright,
-            playwrightVersion: analysis.playwrightVersion,
-            browserConfig: analysis.browserConfig,
-            extraSystemDeps: extraSystemDeps,
-        });
+        dockerfile = generatePytestDockerfile(dockerfileOptions);
 
-        entrypoint = generatePytestEntrypoint(analysis.packageManager);
+        entrypoint = generatePytestEntrypoint({
+            packageManager: analysis.packageManager,
+            useAllure,
+        });
     }
 
     const files = [
@@ -343,7 +350,7 @@ export async function generate(
         p.log.warn(`Dockerfile missing in ${targetDir}. Generating fallback Dockerfile...`);
         const fallbackContent = framework === "playwright"
             ? playwrightDockerfile(PLAYWRIGHT_DEFAULT_VERSION)
-            : "FROM python:3.11-slim\nWORKDIR /app\nCOPY requirements.txt ./\nRUN pip install --no-cache-dir -r requirements.txt\nCOPY . .\nRUN chmod +x /app/entrypoint.sh\n";
+            : `FROM python:${PYTHON_DEFAULT_VERSION}-slim\nWORKDIR /app\nCOPY requirements.txt ./\nRUN pip install --no-cache-dir -r requirements.txt\nCOPY . .\nRUN chmod +x /app/entrypoint.sh\n`;
         await writeFile(dockerfilePath, enforceLF(fallbackContent), { mode: 0o644 });
 
         if (!(await fileExists(dockerfilePath))) {
@@ -360,7 +367,8 @@ export async function generate(
             `${pc.dim("Follow these steps to connect your project:")}`,
             "",
             `${pc.bold("1.")} docker buildx build${platformFlag} -t ${pc.cyan(fullImage)} --push .`,
-            `${pc.bold("2.")} Enter the image name ${pc.cyan(fullImage)} in the Agnox Dashboard.`,
+            `${pc.bold("2.")} In the Agnox Dashboard, open ${pc.bold("Settings → Run Settings")} and enter ${pc.cyan(fullImage)} as the Docker image.`,
+            pc.dim("Guide: https://docs.agnox.dev"),
         ].join("\n"),
         `${pc.green("✅")} Next steps to connect your project to Agnox`
     );

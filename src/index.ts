@@ -5,14 +5,17 @@ import pc from "picocolors";
 import { generate, detectFramework, getProjectName, type Framework } from "./generator.js";
 import { deploy } from "./deployer.js";
 
+/** Injected at build time from package.json (see tsup.config.ts). */
+declare const __AGNOX_CLI_VERSION__: string;
+
 const program = new Command();
 
 program
     .name("agnox-cli")
     .description(
-        "Agnox CLI — Prepare any test automation repo for the Agnox platform"
+        "Agnox CLI — Scaffold, build and push Docker test images for Agnox Hosted runs"
     )
-    .version("2.0.7");
+    .version(__AGNOX_CLI_VERSION__);
 
 program
     .command("init")
